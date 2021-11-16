@@ -5,6 +5,7 @@ import os
 import random
 import re
 import sys
+import copy
 
 #
 # Complete the 'collectMax' function below.
@@ -12,24 +13,61 @@ import sys
 # The function is expected to return an INTEGER.
 # The function accepts 2D_INTEGER_ARRAY mat as parameter.
 #
-    
 def collectMax(mat):
     # Write your code here
     row = len(mat)
     column = len(mat[0])
-    lookupTable = [[[None] * row for r in range(row)] for c in range(column)]
+    lookupTable = [[0 for r in range(row)] for c in range(column)]
+    lookupTable2 = copy.deepcopy(lookupTable)
     def findCollectMax(r1, c1, r2, c2):
-        if (row == r1 or r2 == 0 or column == c1 or c2 == 0 or mat[r1][c1] == -1 or mat[r2][c2] == -1):
+        def downRight(r1, c1):
+            for i in range(row):
+                for j in range(column):
+                    if i == j == 0:
+                        lookupTable[i][j] = mat[i][j]
+                    elif mat[i][j] == -1:
+                        lookupTable[i][j] = mat[i][j]
+                        continue
+                    elif i == 0:
+                        lookupTable[i][j] = lookupTable[i][j-1] + mat[i][j]
+                        if j > 0:
+                            mat[i][j-1] = 0
+                    elif j == 0:
+                        lookupTable[i][j] = lookupTable[i-1][j] + mat[i][j]
+                        if i > 0:
+                            mat[i-1][j] = 0
+                    else:
+                        lookupTable[i][j] = max(lookupTable[i][j-1], lookupTable[i-1][j]) + mat[i][j]
+                        if lookupTable[i][j-1] > lookupTable[i-1][j]:
+                            mat[i][j-1] = 0
+                        elif lookupTable[i][j-1] < lookupTable[i-1][j]:
+                            mat[i-1][j] = 0
+            if mat[-1][-1] == 1:
+                mat[-1][-1] = 0
+            return lookupTable[-1][-1]
+        
+        def upLeft(r2, c2):
+            for i in range(1 ,row+1):
+                for j in range(1, column+1):
+                    if -i == -j == -1:
+                        lookupTable2[-i][-j] = mat[-i][-j]
+                    elif mat[-i][-j] == -1:
+                        lookupTable2[-i][-j] = mat[-i][-j]
+                        continue
+                    elif -i == -1:
+                        lookupTable2[-i][-j] = lookupTable2[-i][-j+1] + mat[-i][-j]
+                    elif -j == -1:
+                        lookupTable2[-i][-j] = lookupTable2[-i+1][-j] + mat[-i][-j]
+                    else:
+                        lookupTable2[-i][-j] = max(lookupTable2[-i][-j+1], lookupTable2[-i+1][-j]) + mat[-i][-j]
+            return lookupTable2[0][0]
+        
+        drMax = downRight(r1, c1)
+        ulMax = upLeft(r2, c2)
+        if drMax == 1:
             return 0
-        elif r1 == c1 == (row - 1):
-            return mat[r1][c1]
-        elif lookupTable[r1][c1][c2] is not None:
-            return lookupTable[r1][c1][c2]
         else:
-            maxCollect = mat[r1][c1] + (c1 == c2 and r1 == r2) * mat[r2][c2]
-            maxCollect += max(findCollectMax(r1, c1+1, r2, c2-1), findCollectMax(r1+1, c1+1, r2-1, c2-1), findCollectMax(r1, c1+1, r2-1, c2), findCollectMax(r1+1, c1, r2, c2))
-        lookupTable[r1][c1][c2] = maxCollect
-        return maxCollect
+            return drMax+ulMax
     return max(0, findCollectMax(0,0,row-1,column-1))
 
 if __name__ == '__main__':
@@ -39,27 +77,40 @@ if __name__ == '__main__':
 
     mat = [[0, 1, -1], [1, 0, -1], [1, 1, 1]]
     mat2 = [[1, 1, -1, 1, 1],
-        [1, 0, 0, -1, 1],
-        [1, 1, 1, 1, -1],
-        [-1, -1, 1, 1, 1],
-        [1, 1, -1, -1, 1]]
+            [1, 0, 0, -1, 1],
+            [1, 1, 1, 1, -1],
+            [-1, -1, 1, 1, 1],
+            [1, 1, -1, -1, 1]]
     mat3 = [[1, 1, -1, 1, 1],
         [1, 0, 0, -1, 1],
         [1, 1, 1, 1, -1],
         [-1, -1, 1, 1, 1],
         [1, 1, -1, -1, -1]]
-    result = collectMax(mat)
 
+    n = 100
+    m = 100
+
+    matrix = []
+    with open('input011.txt') as f:
+        for line in f:
+            matrix.append(list(map(int, line.rstrip().split(" "))))
+    
+    result = collectMax(mat)
     print(str(result) + '\n')
     print("Expected Result: 5")
 
+  
     result = collectMax(mat2)
     print(str(result) + '\n')
-    print("Expected Result: 9")
+    print("Expected Result: 11")
 
     result = collectMax(mat3)
     print(str(result) + '\n')
     print("Expected Result: 0")
+
+    result = collectMax(matrix)
+    print(str(result) + '\n')
+    print("Expected Result: 312")
 
 
 #3
